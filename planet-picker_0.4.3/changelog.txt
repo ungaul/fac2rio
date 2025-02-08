@@ -1,0 +1,74 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.4.3
+Date: 2024-11-19
+  Fixes:
+    - GUI bug causing planet selector to trigger incorrectly
+    - Crash when loading a save with the mod enabled
+    - Removed logging noise
+---------------------------------------------------------------------------------------------------
+Version: 0.4.2
+Date: 2024-11-15
+  Fixes:
+    - More fixes to the loading check
+---------------------------------------------------------------------------------------------------
+Version: 0.4.1
+Date: 2024-11-15
+  Fixes:
+    - Fixed a loading issue where the chunks loaded would not be the same as chunks queued for generation
+---------------------------------------------------------------------------------------------------
+Version: 0.4.0
+Date: 2024-11-14
+  Changes:
+    - Added Centrifugation for coal production on Gleba
+    - Added Polymer Dissolution for plastic production on Vulcanus
+    - Added Sulfur as a byproduct of Battery Recycling for sulfur production on Fulgora
+  Features:
+    - Added a remote interface for adding custom planets to the planet picker
+    - Planets can now be toggled without having to start a new save
+    - Added a new loading UI for pregenerating the planets to prevent unexpected lag when loading in for the first time
+---------------------------------------------------------------------------------------------------
+Version: 0.3.2
+Date: 2024-11-12
+  Fixes:
+    - Locale fixes
+---------------------------------------------------------------------------------------------------
+Version: 0.3.1
+Date: 2024-11-12
+  Changes:
+    - Added Ice Melting technology to Fulgora start as a source of water
+  Fixes:
+    - Fixed a setting misconfiguration for Vulcanus and Fulgora
+---------------------------------------------------------------------------------------------------
+Version: 0.3.0
+Date: 2024-11-12
+  Features:
+    - Added settings for customizing what changes should be made. It's now possible to disable all changes and simply enable the planet select screen, allowing you to use other mods to modify the bootstrapping on other planets however you like.
+  Changes:
+    - Added a new Acid Processing technology to replace Oil Processing on Vulcanus
+    - Moved the Chemical Plant and Refinery unlocks to the Fluid Handling technology
+    - Removed steel from and adjusted the Thermal Vent recipe since it's no longer needed anywhere else
+    - Removed the carbon steel smelting chain and alternate recipes as they're no longer necessary
+  Fixes:
+    - Fixed some issues with the patching of the oil dependency technology
+    - Fixed a crash where the thermal vent prototype would reference sounds without nil checking
+    - Fixed several other potential crashes
+---------------------------------------------------------------------------------------------------
+Version: 0.2.1
+Date: 2024-11-06
+  Fixes:
+    - Removed the oil dependency from fluid handling for Vulcanus progression
+---------------------------------------------------------------------------------------------------
+Version: 0.2.0
+Date: 2024-11-06
+  Changes:
+    - Altered technology progression to allow for players to start with nothing on Fulgora and Vulcanus
+    - Mining Fulgoran lightning attractors will sometimes yield substations and vary rarely a lighting rod
+    - Mining larger Fulgoran ruins will sometimes yield accumulators
+    - Mining Vulcanus huge rocks will unlock a new recipe chain for steel production
+    - Added a new structure for generating power on Vulcanus using the sulfuric acid vents
+---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 2024-11-05
+  Features:
+    - Players can choose starting planet
+    - Added planet selection UI, force, void, etc.

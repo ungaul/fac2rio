@@ -1,0 +1,361 @@
+
+{
+  "mods": 
+  [
+    
+    {
+      "name": "base",
+      "enabled": true
+    },
+    
+    {
+      "name": "elevated-rails",
+      "enabled": true
+    },
+    
+    {
+      "name": "quality",
+      "enabled": true
+    },
+    
+    {
+      "name": "space-age",
+      "enabled": true
+    },
+    
+    {
+      "name": "aai-loaders",
+      "enabled": false
+    },
+    
+    {
+      "name": "alien-biomes",
+      "enabled": false
+    },
+    
+    {
+      "name": "alien-biomes-graphics",
+      "enabled": false
+    },
+    
+    {
+      "name": "AutoDeconstruct",
+      "enabled": true
+    },
+    
+    {
+      "name": "Automatic_Train_Painter",
+      "enabled": true
+    },
+    
+    {
+      "name": "auto_manual_mode",
+      "enabled": true
+    },
+    
+    {
+      "name": "bigger_slower_trains-M",
+      "enabled": false
+    },
+    
+    {
+      "name": "bot-batteries-technologies",
+      "enabled": false
+    },
+    
+    {
+      "name": "Bottleneck",
+      "enabled": true
+    },
+    
+    {
+      "name": "bullet-trails",
+      "enabled": true
+    },
+    
+    {
+      "name": "cargo-ships",
+      "enabled": false
+    },
+    
+    {
+      "name": "cargo-ships-graphics",
+      "enabled": false
+    },
+    
+    {
+      "name": "Constructron-Continued",
+      "enabled": false
+    },
+    
+    {
+      "name": "CopyPasteModules",
+      "enabled": false
+    },
+    
+    {
+      "name": "diplomacy",
+      "enabled": true
+    },
+    
+    {
+      "name": "DiscoScience",
+      "enabled": false
+    },
+    
+    {
+      "name": "EvenDistributionLite",
+      "enabled": true
+    },
+    
+    {
+      "name": "FacAutoScreenshot_Updated",
+      "enabled": false
+    },
+    
+    {
+      "name": "factorio-crash-site",
+      "enabled": false
+    },
+    
+    {
+      "name": "FactorySearch",
+      "enabled": true
+    },
+    
+    {
+      "name": "far-reach",
+      "enabled": true
+    },
+    
+    {
+      "name": "Fill4Me",
+      "enabled": true
+    },
+    
+    {
+      "name": "flib",
+      "enabled": true
+    },
+    
+    {
+      "name": "FluidMustFlow",
+      "enabled": false
+    },
+    
+    {
+      "name": "grappling-gun",
+      "enabled": false
+    },
+    
+    {
+      "name": "Gun_Turret_Alerts",
+      "enabled": true
+    },
+    
+    {
+      "name": "helmod",
+      "enabled": true
+    },
+    
+    {
+      "name": "heroic_library",
+      "enabled": false
+    },
+    
+    {
+      "name": "Honk",
+      "enabled": true
+    },
+    
+    {
+      "name": "inserter-throughput-lib",
+      "enabled": false
+    },
+    
+    {
+      "name": "kry_safe_planets",
+      "enabled": false
+    },
+    
+    {
+      "name": "kry_stdlib",
+      "enabled": false
+    },
+    
+    {
+      "name": "lightorio",
+      "enabled": true
+    },
+    
+    {
+      "name": "map-reveal-tool-fixed",
+      "enabled": false
+    },
+    
+    {
+      "name": "maraxsis",
+      "enabled": false
+    },
+    
+    {
+      "name": "MegaBlackMarket",
+      "enabled": true
+    },
+    
+    {
+      "name": "mferrari_lib",
+      "enabled": false
+    },
+    
+    {
+      "name": "Milestones",
+      "enabled": true
+    },
+    
+    {
+      "name": "MtnFortressAddons",
+      "enabled": false
+    },
+    
+    {
+      "name": "my_factory_for_my_team_only",
+      "enabled": false
+    },
+    
+    {
+      "name": "naked-rails-f2",
+      "enabled": false
+    },
+    
+    {
+      "name": "nixie-tubes",
+      "enabled": false
+    },
+    
+    {
+      "name": "planet-picker",
+      "enabled": true
+    },
+    
+    {
+      "name": "QueueToFrontLimited",
+      "enabled": true
+    },
+    
+    {
+      "name": "quick-adjustable-inserters",
+      "enabled": false
+    },
+    
+    {
+      "name": "RateCalculator",
+      "enabled": true
+    },
+    
+    {
+      "name": "real-starry-universe",
+      "enabled": false
+    },
+    
+    {
+      "name": "robot_attrition",
+      "enabled": false
+    },
+    
+    {
+      "name": "se-space-trains",
+      "enabled": false
+    },
+    
+    {
+      "name": "Shortcuts-ick",
+      "enabled": true
+    },
+    
+    {
+      "name": "Solar-Lamp",
+      "enabled": false
+    },
+    
+    {
+      "name": "solidwaste-pollution-filter",
+      "enabled": false
+    },
+    
+    {
+      "name": "SpidertronEnhancements",
+      "enabled": false
+    },
+    
+    {
+      "name": "SpidertronPatrols",
+      "enabled": false
+    },
+    
+    {
+      "name": "squeak-through-2",
+      "enabled": true
+    },
+    
+    {
+      "name": "TaskList",
+      "enabled": true
+    },
+    
+    {
+      "name": "tenebris",
+      "enabled": false
+    },
+    
+    {
+      "name": "textplates",
+      "enabled": false
+    },
+    
+    {
+      "name": "TLBE",
+      "enabled": true
+    },
+    
+    {
+      "name": "train-trails",
+      "enabled": false
+    },
+    
+    {
+      "name": "tree_collision",
+      "enabled": false
+    },
+    
+    {
+      "name": "turret-activation-delay",
+      "enabled": false
+    },
+    
+    {
+      "name": "VehicleSnap",
+      "enabled": true
+    },
+    
+    {
+      "name": "visible-planets",
+      "enabled": false
+    },
+    
+    {
+      "name": "water-removes-more-pollution",
+      "enabled": false
+    },
+    
+    {
+      "name": "Waterfill_v17",
+      "enabled": false
+    },
+    
+    {
+      "name": "zk-lib",
+      "enabled": true
+    }
+  ]
+}
