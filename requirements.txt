@@ -2,5 +2,5 @@ discord.py
 boto3
 paramiko
 asyncio
-io
 dotenv
+aiohttp
