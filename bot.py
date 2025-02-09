@@ -7,13 +7,10 @@ import asyncio
 import os
 import json
 from io import StringIO
-from mcrcon import MCRcon
 
 load_dotenv()
 
 # Environment variables
-RCON_PORT = 27015
-RCON_PASSWORD = "HEIL"
 TOKEN = os.getenv('TOKEN')
 INSTANCE_ID = os.getenv('INSTANCE_ID')
 SERVER_IP = os.getenv('SERVER_IP')
@@ -36,15 +33,20 @@ tree = app_commands.CommandTree(bot)
 ec2_client = boto3.client('ec2', region_name='ap-northeast-1')
 
 
-def get_player_count():
-    """Retrieve the number of players currently connected to the Factorio server using RCON."""
+async def get_player_count():
     try:
-        with MCRcon(SERVER_IP, RCON_PASSWORD, port=RCON_PORT) as mcr:
-            response = mcr.command("/players")
-            # Check the response and count the number of players
-            return len(response.splitlines())
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(SERVER_IP, username=EC2_USER, pkey=PRIVATE_KEY)
+        stdin, stdout, stderr = ssh.exec_command("factorio/bin/x64/factorio --status")
+        output = stdout.read().decode()
+        ssh.close()
+        for line in output.splitlines():
+            if "players online" in line:
+                return int(line.split()[0])
+        return 0
     except Exception as e:
-        print(f"Error with RCON: {e}")
+        print(f"Error checking player count: {e}")
         return 0
 
 
@@ -55,16 +57,14 @@ async def update_server_status():
     while not bot.is_closed():
         instance_state = get_instance_state()
         factorio_running = await is_factorio_running() if instance_state == "running" else False
-
         if factorio_running:
-            player_count = get_player_count()
-
+            player_count = await get_player_count()
             if player_count == 0:
-                print("No players connected, checking if the server has been idle for 5 minutes...")
+                print("No players connected and game is paused, checking if we need to shut down EC2.")
                 await asyncio.sleep(300)
-                player_count_again = get_player_count()
-                if player_count_again == 0:
-                    print("Still no players after 5 minutes, stopping EC2 server.")
+                player_count = await get_player_count()
+                if player_count == 0:
+                    print("Still no players and game is paused after 5 minutes, stopping EC2 server.")
                     ec2_client.stop_instances(InstanceIds=[INSTANCE_ID])
                     if channel:
                         await channel.edit(name="Server Off")
@@ -80,23 +80,6 @@ async def update_server_status():
             print(f"Channel name updated: {new_name}")
 
         await asyncio.sleep(60)
-
-async def check_if_paused():
-    try:
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(SERVER_IP, username=EC2_USER, pkey=PRIVATE_KEY)
-        stdin, stdout, stderr = ssh.exec_command("cat /home/ec2-user/factorio/factorio-current.log | grep 'Game Paused'")
-        output = stdout.read().decode()
-        if "Game Paused" in output:
-            ssh.close()
-            return True
-
-        ssh.close()
-        return False
-    except Exception as e:
-        print(f"Error checking paused state: {e}")
-        return False
 
 
 @bot.event
@@ -141,15 +124,12 @@ def upload_factorio_configs():
             "autosave_slots": 5,
             "afk_autokick_interval": 10,
             "auto_pause": True,
-            "only_admins_can_pause_the_game": True,
-            "rcon_port": 27015,
-            "rcon_password": "HEIL",
-            "rcon_interface": "0.0.0.0"
+            "only_admins_can_pause_the_game": True
         }
 
         with sftp.open('/home/ec2-user/factorio/server-settings.json', 'w') as settings_file:
             settings_file.write(json.dumps(server_settings, indent=4))
-        print("server-settings.json successfully uploaded with RCON settings.")
+        print("server-settings.json successfully uploaded.")
 
         # Upload mod-list.json
         local_mod_list_path = 'mod-list.json'
@@ -253,14 +233,15 @@ async def stop_factorio(interaction: discord.Interaction):
         await interaction.followup.send(f"Error: {e}")
 
 
-@tree.command(name="status_factorio", description="Check if the Factorio server is running.")
+@tree.command(name="status_factorio", description="Check if the Factorio server is running and show player count.")
 async def status_factorio(interaction: discord.Interaction):
     print("Command /status_factorio received")
 
     factorio_running = await is_factorio_running()
     status = "Running" if factorio_running else "Stopped"
+    player_count = await get_player_count()
 
-    await interaction.response.send_message(f"Factorio server is currently: **{status}**")
+    await interaction.response.send_message(f"Factorio server is currently: **{status}** with {player_count} players online.")
 
 
 @tree.command(name="help", description="Show available commands.")
