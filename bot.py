@@ -30,7 +30,7 @@ bot = discord.Client(intents=intents)
 tree = app_commands.CommandTree(bot)
 
 # AWS EC2 client
-ec2_client = boto3.client('ec2', region_name='ap-east-1')
+ec2_client = boto3.client('ec2', region_name='ap-northeast-1')
 
 
 async def update_server_status():
