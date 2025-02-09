@@ -12,7 +12,7 @@
     },
     "username": "gaulerie",
     "password": "",
-    "token": "2a2bff20318bfbba1b43e793d4c699",
+    "token": "",
     "game_password": "",
     "require_user_verification": true,
     "max_upload_in_kilobytes_per_second": 0,
@@ -23,5 +23,8 @@
     "autosave_slots": 5,
     "afk_autokick_interval": 10,
     "auto_pause": true,
-    "only_admins_can_pause_the_game": true
+    "only_admins_can_pause_the_game": true,
+    "rcon_port": 27015,
+    "rcon_password": "HEIL",
+    "rcon_interface": "0.0.0.0"
 }
