@@ -1,0 +1,27 @@
+{
+    "name": "FAC2RIO",
+    "description": "Yo.",
+    "tags": [
+        "modded",
+        "coop",
+        "space"
+    ],
+    "max_players": 100,
+    "visibility": {
+        "public": true
+    },
+    "username": "gaulerie",
+    "password": "",
+    "token": "2a2bff20318bfbba1b43e793d4c699",
+    "game_password": "",
+    "require_user_verification": true,
+    "max_upload_in_kilobytes_per_second": 0,
+    "minimum_latency_in_ticks": 0,
+    "ignore_player_limit_for_returning_players": false,
+    "allow_commands": "admins-only",
+    "autosave_interval": 3,
+    "autosave_slots": 5,
+    "afk_autokick_interval": 10,
+    "auto_pause": true,
+    "only_admins_can_pause_the_game": true
+}

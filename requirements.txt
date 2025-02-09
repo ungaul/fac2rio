@@ -1,0 +1,6 @@
+discord
+boto3
+paramiko
+asyncio
+io
+dotenv
