@@ -295,6 +295,34 @@ async def create(interaction: discord.Interaction, mapname: str, modlist: str = 
         await message.edit(content=f"Error creating new map: {e}")
 
 
+@tree.command(name="list", description="List all maps in the EC2 Factorio saves directory and then shut down the EC2 instance.")
+async def list_maps(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True)
+    message = await interaction.original_response()
+    instance_state = get_instance_state()
+    if instance_state == "stopped":
+        await message.edit(content="Starting EC2 instance to list maps...")
+        ec2_client.start_instances(InstanceIds=[INSTANCE_ID])
+        await asyncio.sleep(60)
+
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(SERVER_IP, username=EC2_USER, pkey=PRIVATE_KEY)
+        stdin, stdout, stderr = ssh.exec_command("ls -1 /home/ec2-user/factorio/saves/*.zip")
+        maps = stdout.read().decode().strip().splitlines()
+        ssh.close()
+
+        if maps:
+            map_list_str = "\n".join(maps)
+        else:
+            map_list_str = "No maps found."
+        ec2_client.stop_instances(InstanceIds=[INSTANCE_ID])
+        await message.edit(content=f"Maps found:\n```\n{map_list_str}\n```\nEC2 instance is now shutting down.")
+    except Exception as e:
+        await message.edit(content=f"Error listing maps: {e}")
+
+
 @tree.command(name="help", description="Show available commands.")
 async def help_command(interaction: discord.Interaction):
     print("Command /help received")
@@ -303,7 +331,8 @@ async def help_command(interaction: discord.Interaction):
     - /start [mapname]: Start the Factorio server for the specified map.
     - /stop: Stop the Factorio server (only if no players are online).
     - /status: Display the server status, current player count and active map.
-    - /create [mapname] [modlist]: Create a new map with an optional mod list (mod names separated by semicolons).
+    - /list: List available maps on the server.
+    - /create [mapname] [modlist (optional)]: Create a new map with an optional mod list (mod names separated by semicolons).
     - /help: Display this help message.
     """
     await interaction.response.send_message(commands_list, ephemeral=True)
