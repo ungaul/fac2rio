@@ -4,3 +4,4 @@ paramiko
 asyncio
 aiohttp
 python-dotenv
+rcon

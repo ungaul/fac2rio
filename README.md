@@ -10,6 +10,10 @@ This project is a customized fork of the *Planet Picker* mod.
 FAC2RIO is a multiplayer game focused on team-based economy and space exploration.
 Each team starts on a unique planet with basic equipment and must advance technologically to reach the edge of space (100,000 km).
 
+## **🪐 Concept Description**
+
+The Discord Bot is able to fetch the numbers of players, as well as start and stop the EC2 & Factorio server.
+
 ### **🎯 Main Objectives**:
 - 🤝 Cooperate or compete with other teams to trade the resources needed for progression.
 - 🚢 Build powerful ships capable of exploring space.
