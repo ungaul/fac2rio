@@ -33,7 +33,7 @@ player_count = 0
 tail_task = None
 zero_player_start_time = None
 tail_stop_event = asyncio.Event()
-current_map = None  # Contient le nom de la map actuellement utilisée (sans .zip)
+current_map = None
 
 async def tail_logs():
     global player_count, zero_player_start_time
