@@ -75,12 +75,24 @@ async def auto_shutdown():
             elapsed = asyncio.get_event_loop().time() - zero_player_start_time
             if elapsed >= 300:
                 print("No players for 5 minutes. Shutting down the server...")
-                try:
-                    ec2_client.stop_instances(InstanceIds=[INSTANCE_ID])
-                    tail_stop_event.set()
-                except Exception as e:
-                    print(f"Error stopping instance: {e}")
-                zero_player_start_time = None
+            try:
+                if current_map is not None:
+                    ssh = paramiko.SSHClient()
+                    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                    ssh.connect(SERVER_IP, username=EC2_USER, pkey=PRIVATE_KEY)
+                    ssh.exec_command("pkill factorio")
+                    stdin, stdout, stderr = ssh.exec_command("ls -t /home/ec2-user/factorio/saves | grep autosave")
+                    autosave_files = stdout.read().decode().strip().splitlines()
+                    if autosave_files:
+                        most_recent = autosave_files[0]
+                        ssh.exec_command(f"cp /home/ec2-user/factorio/saves/{current_map}.zip /home/ec2-user/factorio/saves/{current_map}_save.zip")
+                        ssh.exec_command(f"cp /home/ec2-user/factorio/saves/{most_recent} /home/ec2-user/factorio/saves/{current_map}.zip")
+                    ssh.close()
+                ec2_client.stop_instances(InstanceIds=[INSTANCE_ID])
+                tail_stop_event.set()
+            except Exception as e:
+                print(f"Error stopping instance: {e}")
+            zero_player_start_time = None
         else:
             zero_player_start_time = None
         await asyncio.sleep(10)
@@ -159,8 +171,17 @@ async def stop_factorio(interaction: discord.Interaction, mapname: str):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(SERVER_IP, username=EC2_USER, pkey=PRIVATE_KEY)
+
         ssh.exec_command("pkill factorio")
+
+        stdin, stdout, stderr = ssh.exec_command("ls -t /home/ec2-user/factorio/saves | grep autosave")
+        autosave_files = stdout.read().decode().strip().splitlines()
+        if autosave_files:
+            most_recent = autosave_files[0]
+            ssh.exec_command(f"cp /home/ec2-user/factorio/saves/{current_map}.zip /home/ec2-user/factorio/saves/{current_map}_save.zip")
+            ssh.exec_command(f"cp /home/ec2-user/factorio/saves/{most_recent} /home/ec2-user/factorio/saves/{current_map}.zip")
         ssh.close()
+
         ec2_client.stop_instances(InstanceIds=[INSTANCE_ID])
         tail_stop_event.set()
         await message.edit(content="Factorio server is now off.")
