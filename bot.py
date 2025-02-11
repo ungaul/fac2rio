@@ -35,56 +35,6 @@ zero_player_start_time = None
 tail_stop_event = asyncio.Event()
 current_map = None
 
-def upload_factorio_configs():
-    try:
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(SERVER_IP, username=EC2_USER, pkey=PRIVATE_KEY)
-
-        sftp = ssh.open_sftp()
-
-        server_settings = {
-            "name": "FAC2RIO",
-            "description": "Yo.",
-            "tags": ["modded", "coop", "space"],
-            "max_players": 100,
-            "visibility": {"public": True},
-            "username": os.getenv('FACTORIO_USERNAME'),
-            "password": "",
-            "token": os.getenv('FACTORIO_TOKEN'),
-            "game_password": "",
-            "require_user_verification": True,
-            "max_upload_in_kilobytes_per_second": 0,
-            "minimum_latency_in_ticks": 0,
-            "ignore_player_limit_for_returning_players": False,
-            "allow_commands": "admins-only",
-            "autosave_interval": 3,
-            "autosave_slots": 5,
-            "afk_autokick_interval": 10,
-            "auto_pause": True,
-            "only_admins_can_pause_the_game": True,
-            "rcon_port": 27015,
-            "rcon_password": "HEIL",
-            "rcon_interface": "0.0.0.0"
-        }
-
-        with sftp.open('/home/ec2-user/factorio/server-settings.json', 'w') as settings_file:
-            settings_file.write(json.dumps(server_settings, indent=4))
-        print("server-settings.json successfully uploaded.")
-
-        local_mod_list_path = 'mod-list.json'
-        remote_mod_list_path = '/home/ec2-user/factorio/mods/mod-list.json'
-        if os.path.exists(local_mod_list_path):
-            sftp.put(local_mod_list_path, remote_mod_list_path)
-            print("mod-list.json successfully uploaded.")
-        else:
-            print(f"Error: {local_mod_list_path} does not exist.")
-
-        sftp.close()
-        ssh.close()
-    except Exception as e:
-        print(f"Error uploading configuration files: {e}")
-
 async def tail_logs():
     global player_count, zero_player_start_time
     try:
@@ -160,9 +110,6 @@ async def start_factorio(interaction: discord.Interaction, mapname: str):
 
     if tail_task is None or tail_task.done():
         tail_task = bot.loop.create_task(tail_logs())
-
-    await message.edit(content="Uploading server configuration...")
-    upload_factorio_configs()
 
     try:
         ssh = paramiko.SSHClient()
