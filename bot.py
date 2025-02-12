@@ -72,7 +72,7 @@ async def auto_shutdown():
         if player_count == 0 and zero_player_start_time is not None:
             elapsed = asyncio.get_event_loop().time() - zero_player_start_time
             if elapsed >= 300:
-                print("No players for 5 minutes. Shutting down the server...")
+                print("300 seconds reached with no players connected. Shutting down the server...")
                 try:
                     if current_map is not None:
                         ssh = paramiko.SSHClient()
@@ -80,7 +80,6 @@ async def auto_shutdown():
                         ssh.connect(SERVER_IP, username=EC2_USER, pkey=PRIVATE_KEY)
                         ssh.exec_command("pkill factorio")
                         ssh.exec_command("rm -f /home/ec2-user/factorio/.lock")
-                        # Procéder à la sauvegarde finale
                         stdin, stdout, stderr = ssh.exec_command("ls -t /home/ec2-user/factorio/saves | grep autosave")
                         autosave_files = stdout.read().decode().strip().splitlines()
                         if autosave_files:
@@ -88,20 +87,18 @@ async def auto_shutdown():
                             ssh.exec_command(f"cp /home/ec2-user/factorio/saves/{current_map}.zip /home/ec2-user/factorio/saves/{current_map}_save.zip")
                             ssh.exec_command(f"cp /home/ec2-user/factorio/saves/{most_recent} /home/ec2-user/factorio/saves/{current_map}.zip")
                         ssh.close()
-                    ec2_client.stop_instances(InstanceIds=[INSTANCE_ID])
+                    ec2_client.stop_instances(InstanceIds=[INSTANCE_ID], Force=True)
                     tail_stop_event.set()
                 except Exception as e:
                     print(f"Error stopping instance: {e}")
                 zero_player_start_time = None
-        else:
-            zero_player_start_time = None
         await asyncio.sleep(10)
 
 @tree.command(name="start", description="Start the Factorio server for a specified map (provide map name without .zip).")
 async def start(interaction: discord.Interaction, mapname: str):
     global tail_task, tail_stop_event, player_count, current_map
     print("Command /start received")
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer(ephemeral=False)
     message = await interaction.original_response()
     instance_state = get_instance_state()
     if instance_state != "stopped":
@@ -110,12 +107,16 @@ async def start(interaction: discord.Interaction, mapname: str):
     if current_map is not None:
         await message.edit(content=f"A server instance is already running with map **{current_map}**. Stop it before starting a new one.")
         return
+
     await message.edit(content="Starting EC2 instance...")
     ec2_client.start_instances(InstanceIds=[INSTANCE_ID])
     await asyncio.sleep(60)
     tail_stop_event.clear()
     player_count = 0
     current_map = mapname
+
+    mod_dir = f"/home/ec2-user/factorio/mods/{mapname}/"
+
     if tail_task is None or tail_task.done():
         tail_task = bot.loop.create_task(tail_logs())
     try:
@@ -123,13 +124,13 @@ async def start(interaction: discord.Interaction, mapname: str):
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(SERVER_IP, username=EC2_USER, pkey=PRIVATE_KEY)
         await message.edit(content="Synchronizing mods for the map...")
-        ssh.exec_command(f"cd factorio/bin/x64 && ./factorio --sync-mods ~/factorio/saves/{mapname}.zip")
+        ssh.exec_command(f"cd factorio/bin/x64 && ./factorio --sync-mods /home/ec2-user/factorio/saves/{mapname}.zip --mod-directory {mod_dir}")
         await asyncio.sleep(5)
         await message.edit(content="Launching Factorio server...")
         ssh.exec_command("rm -f /home/ec2-user/factorio/.lock")
         ssh.exec_command(
-            f"cd factorio/bin/x64 && nohup ./factorio --start-server ~/factorio/saves/{mapname}.zip "
-            "--server-settings ~/factorio/server-settings.json > /home/ec2-user/factorio/factorio.log 2>&1 &"
+            f"cd factorio/bin/x64 && nohup ./factorio --start-server /home/ec2-user/factorio/saves/{mapname}.zip "
+            f"--server-settings /home/ec2-user/factorio/server-settings.json --mod-directory {mod_dir} > /home/ec2-user/factorio/factorio.log 2>&1 &"
         )
         await asyncio.sleep(10)
         stdin, stdout, stderr = ssh.exec_command("tail -n 10 /home/ec2-user/factorio/factorio.log")
@@ -146,7 +147,7 @@ async def start(interaction: discord.Interaction, mapname: str):
 async def stop(interaction: discord.Interaction):
     global tail_stop_event, current_map
     print("Command /stop received")
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer(ephemeral=False)
     message = await interaction.original_response()
     instance_state = get_instance_state()
     if instance_state == "stopped":
@@ -159,7 +160,14 @@ async def stop(interaction: discord.Interaction):
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(SERVER_IP, username=EC2_USER, pkey=PRIVATE_KEY)
+        try:
+            ssh.connect(SERVER_IP, username=EC2_USER, pkey=PRIVATE_KEY, timeout=10)
+        except Exception as connect_e:
+            print(f"SSH connect failed: {connect_e}. Assuming server is already off.")
+            await message.edit(content="Factorio server is now off (instance unreachable).")
+            tail_stop_event.set()
+            current_map = None
+            return
         ssh.exec_command("pkill factorio")
         ssh.exec_command("rm -f /home/ec2-user/factorio/.lock")
         stdin, stdout, stderr = ssh.exec_command("ls -t /home/ec2-user/factorio/saves | grep autosave")
@@ -169,7 +177,7 @@ async def stop(interaction: discord.Interaction):
             ssh.exec_command(f"cp /home/ec2-user/factorio/saves/{current_map}.zip /home/ec2-user/factorio/saves/{current_map}_save.zip")
             ssh.exec_command(f"cp /home/ec2-user/factorio/saves/{most_recent} /home/ec2-user/factorio/saves/{current_map}.zip")
         ssh.close()
-        ec2_client.stop_instances(InstanceIds=[INSTANCE_ID])
+        ec2_client.stop_instances(InstanceIds=[INSTANCE_ID], Force=True)
         tail_stop_event.set()
         await message.edit(content="Factorio server is now off.")
         await asyncio.sleep(2)
@@ -181,12 +189,12 @@ async def stop(interaction: discord.Interaction):
 @tree.command(name="status", description="Check the Factorio server status and show current player count.")
 async def status(interaction: discord.Interaction):
     print("Command /status received")
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer(ephemeral=False)
     instance_state = get_instance_state()
     status_str = "Running" if instance_state == "running" else "Stopped"
     await interaction.followup.send(
         f"Factorio server is **{status_str}** with **{player_count}** players online. (Map: **{current_map or 'None'}**)",
-        ephemeral=True
+        ephemeral=False
     )
 
 @tree.command(
@@ -194,7 +202,7 @@ async def status(interaction: discord.Interaction):
     description="Create a new Factorio map with specified mods. Optional mod list (mod names separated by ;)."
 )
 async def create(interaction: discord.Interaction, mapname: str, modlist: str = None):
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer(ephemeral=False)
     message = await interaction.original_response()
     print("Command /create received")
 
@@ -242,13 +250,17 @@ async def create(interaction: discord.Interaction, mapname: str, modlist: str = 
             await message.edit(content=f"Error checking mods existence: {e}")
             return
 
+    new_mod_dir = f"/home/ec2-user/factorio/mods/{mapname}"
+    remote_mod_list_template = "/home/ec2-user/factorio/mods/mod-list.json"
+    remote_mod_list_path = f"{new_mod_dir}/mod-list.json"
+
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(SERVER_IP, username=EC2_USER, pkey=PRIVATE_KEY)
+        ssh.exec_command(f"mkdir -p {new_mod_dir}")
         sftp = ssh.open_sftp()
-        remote_mod_list_path = "/home/ec2-user/factorio/mods/mod-list.json"
-        with sftp.open(remote_mod_list_path, 'r') as f:
+        with sftp.open(remote_mod_list_template, 'r') as f:
             data = json.load(f)
         mandatory_mods = {"base", "elevated-rails", "quality", "space-age"}
         for mod in data.get("mods", []):
@@ -261,9 +273,10 @@ async def create(interaction: discord.Interaction, mapname: str, modlist: str = 
         with sftp.open(remote_mod_list_path, 'w') as f:
             json.dump(data, f, indent=2)
         sftp.close()
+        ssh.exec_command(f"cp /home/ec2-user/factorio/mods/*.zip {new_mod_dir}/")
         ssh.close()
     except Exception as e:
-        await message.edit(content=f"Error updating remote mod-list.json: {e}")
+        await message.edit(content=f"Error updating remote mod-list.json or copying mods: {e}")
         return
 
     try:
@@ -272,7 +285,7 @@ async def create(interaction: discord.Interaction, mapname: str, modlist: str = 
         ssh.connect(SERVER_IP, username=EC2_USER, pkey=PRIVATE_KEY)
         await message.edit(content="Creating new map and applying mod configuration...")
         ssh.exec_command("rm -f /home/ec2-user/factorio/.lock")
-        create_cmd = f"cd factorio/bin/x64 && ./factorio --create ~/factorio/saves/{mapname}.zip --server-settings ~/factorio/server-settings.json"
+        create_cmd = f"cd factorio/bin/x64 && ./factorio --create /home/ec2-user/factorio/saves/{mapname}.zip --server-settings /home/ec2-user/factorio/server-settings.json --mod-directory {new_mod_dir}"
         ssh.exec_command(create_cmd)
         await asyncio.sleep(10)
         ssh2 = paramiko.SSHClient()
@@ -285,19 +298,18 @@ async def create(interaction: discord.Interaction, mapname: str, modlist: str = 
         if not created_save:
             await message.edit(content=f"Error: Map file {mapname}.zip was not created.")
             return
-        ec2_client.stop_instances(InstanceIds=[INSTANCE_ID])
+        ec2_client.stop_instances(InstanceIds=[INSTANCE_ID], Force=True)
         if user_mods:
             mods_used = ", ".join(user_mods)
         else:
             mods_used = "all non-mandatory mods disabled"
-        await message.edit(content=f"Map **{mapname}** successfully created with mods: {mods_used}!\n\nPlease now run `/start {mapname}` to run the map.")
+        await message.edit(content=f"Map **{mapname}** successfully created with mods: {mods_used}!\n\nPlease now run /start {mapname} to run the map.")
     except Exception as e:
         await message.edit(content=f"Error creating new map: {e}")
 
-
 @tree.command(name="list", description="List all maps in the EC2 Factorio saves directory and then shut down the EC2 instance.")
 async def list_maps(interaction: discord.Interaction):
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer(ephemeral=False)
     message = await interaction.original_response()
     instance_state = get_instance_state()
     if instance_state == "stopped":
@@ -317,11 +329,10 @@ async def list_maps(interaction: discord.Interaction):
             map_list_str = "\n".join(maps)
         else:
             map_list_str = "No maps found."
-        ec2_client.stop_instances(InstanceIds=[INSTANCE_ID])
-        await message.edit(content=f"Maps found:\n```\n{map_list_str}\n```\nEC2 instance is now shutting down.")
+        ec2_client.stop_instances(InstanceIds=[INSTANCE_ID], Force=True)
+        await message.edit(content=f"Maps found:\n\n{map_list_str}\n\nEC2 instance is now shutting down.")
     except Exception as e:
         await message.edit(content=f"Error listing maps: {e}")
-
 
 @tree.command(name="help", description="Show available commands.")
 async def help_command(interaction: discord.Interaction):
